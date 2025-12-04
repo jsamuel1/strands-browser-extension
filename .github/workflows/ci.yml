@@ -1,0 +1,183 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  lint-and-type-check:
+    name: Lint and Type Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run ESLint
+        run: npm run lint
+
+      - name: Run TypeScript type check
+        run: npm run type-check
+
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run unit tests
+        run: npm test
+
+      - name: Generate test coverage report
+        run: npm run test -- --coverage
+
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./coverage/lcov.info
+          flags: unittests
+          name: codecov-umbrella
+          fail_ci_if_error: false
+
+  build:
+    name: Build Extension
+    runs-on: ubuntu-latest
+    needs: [lint-and-type-check, test]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build web application
+        run: npm run build
+
+      - name: Build extension
+        run: npm run build:extension
+
+      - name: Verify build artifacts
+        run: |
+          echo "Verifying dist directory structure..."
+          ls -la dist/
+          echo "Checking for required files..."
+          test -f dist/manifest.json || exit 1
+          test -d dist/icons || exit 1
+          test -f dist/popup.html || exit 1
+          test -f dist/index.html || exit 1
+          echo "All required files present ✓"
+
+      - name: Validate manifest.json
+        run: |
+          echo "Validating manifest.json..."
+          node -e "
+            const manifest = require('./dist/manifest.json');
+            console.log('Manifest version:', manifest.manifest_version);
+            console.log('Extension name:', manifest.name);
+            console.log('Version:', manifest.version);
+            if (manifest.manifest_version !== 3) {
+              throw new Error('Invalid manifest version');
+            }
+            console.log('Manifest validation passed ✓');
+          "
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: chrome-extension-build
+          path: dist/
+          retention-days: 30
+          compression-level: 6
+          include-hidden-files: false
+
+      - name: Upload web build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-app-build
+          path: dist/
+          retention-days: 7
+
+  build-development:
+    name: Build Extension (Development)
+    runs-on: ubuntu-latest
+    if: github.ref != 'refs/heads/main'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build extension (development mode)
+        run: |
+          npm run build
+          NODE_ENV=development node scripts/post-build.js
+
+      - name: Upload development build
+        uses: actions/upload-artifact@v4
+        with:
+          name: chrome-extension-dev-build
+          path: dist/
+          retention-days: 7
+
+  security-audit:
+    name: Security Audit
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Run security audit
+        run: npm audit --audit-level=high
+
+      - name: Check for vulnerable dependencies
+        run: |
+          VULN_COUNT=$(npm audit --parseable --audit-level=high | grep -v "^found.*vulnerabilities" | wc -l)
+          if [ "$VULN_COUNT" -ne 0 ]; then
+            echo "ERROR: Found $VULN_COUNT high-level vulnerabilities"
+            exit 1
+          fi
+          echo "SUCCESS: No high-level vulnerabilities found"

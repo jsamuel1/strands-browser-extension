@@ -1,13 +1,31 @@
 # Dependencies
 node_modules/
-package-lock.json
 
 # Build output
 dist/
 
+# Test coverage
+coverage/
+.nyc_output/
+
 # Environment variables
 .env
 .env.local
+.env.*.local
+
+# Security-sensitive files
+# Note: These patterns are defensive measures. Credentials should NEVER be stored
+# in the repository. Always use system locations (~/.aws/) or environment variables.
+*.pem
+*.key
+*.p12
+*.pfx
+*.cert
+*.crt
+secrets.json
+service-account.json
+*-key.json
+private-key.*
 
 # IDE
 .vscode/
@@ -23,6 +41,18 @@ Thumbs.db
 # Logs
 *.log
 npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
 
 # TypeScript
 *.tsbuildinfo
+
+# Extension-specific
+web-ext-artifacts/
+*.crx
+*.xpi
+*.zip
+
+# Test directories (for temporary test files)
+test-dist/
