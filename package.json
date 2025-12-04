@@ -27,13 +27,13 @@
     "@types/node": "^20.0.0",
     "@typescript-eslint/eslint-plugin": "^7.0.0",
     "@typescript-eslint/parser": "^7.0.0",
-    "@vitest/coverage-v8": "^1.0.0",
-    "@vitest/ui": "^1.0.0",
+    "@vitest/coverage-v8": "^4.0.15",
+    "@vitest/ui": "^4.0.15",
     "eslint": "^8.57.0",
-    "happy-dom": "^12.0.0",
+    "happy-dom": "^20.0.11",
     "jsdom": "^23.0.0",
     "typescript": "^5.0.0",
     "vite": "^6.0.0",
-    "vitest": "^1.0.0"
+    "vitest": "^4.0.15"
   }
 }
