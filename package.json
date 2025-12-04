@@ -1,20 +1,33 @@
 {
-  "name": "03-browser-agent",
+  "name": "strands-browser-extension",
   "version": "1.0.0",
-  "description": "Run Strands Agents in the browser with Vite",
+  "description": "Comprehensive browser control tool for Strands Agent with Chrome extension support",
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview"
+    "build": "tsc && vite build && npm run copy-manifest",
+    "build:extension": "npm run build",
+    "copy-manifest": "cp manifest.json dist/",
+    "preview": "vite preview",
+    "test": "vitest",
+    "test:unit": "vitest run --reporter=verbose",
+    "test:integration": "vitest run --config vitest.integration.config.ts"
   },
   "dependencies": {
+    "@mozilla/readability": "^0.6.0",
     "@strands-agents/sdk": "github:strands-agents/sdk-typescript",
+    "jsdom": "^26.1.0",
     "marked": "^17.0.1",
-    "openai": "^4.0.0"
+    "openai": "^4.0.0",
+    "turndown": "^7.2.2",
+    "zod": "^4.1.13"
   },
   "devDependencies": {
+    "@types/chrome": "^0.0.277",
+    "@types/node": "^22.0.0",
+    "@types/turndown": "^5.0.5",
     "typescript": "^5.0.0",
-    "vite": "^6.0.0"
+    "vite": "^6.0.0",
+    "vitest": "^2.0.0"
   }
 }
